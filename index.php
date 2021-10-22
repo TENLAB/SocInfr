@@ -10,9 +10,10 @@
   window.grid = true;
   window.jsonMap=null;
   window.jsonTabl=null;
+  window.jsonGrid=null;
   window.onload = function() {  
-    mapDraw(); 
-    admDraw(); 
+    //mapDraw(); 
+    //admDraw();
 
     m = document.getElementById("container")
   }

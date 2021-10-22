@@ -10,6 +10,50 @@ let btn2 = document.getElementsByClassName("btn-2");
 let btn3 = document.getElementsByClassName("btn-3");
 let btn4 = document.getElementsByClassName("btn-4");
 
+let json = "./src/fishnet2021.geojson";
+let tablJSON = "./src/tabl.json";
+let jsonGrid = "src/admzones2021.geojson";
+
+
+function readTextFile(file, callback) {
+    var rawFile = new XMLHttpRequest();
+    rawFile.overrideMimeType("application/json");
+    rawFile.open("GET", file, true);
+    rawFile.onreadystatechange = function () {
+        if (rawFile.readyState === 4 && rawFile.status == "200") {
+            callback(rawFile.responseText);
+        }
+    }
+    rawFile.send(null);
+}
+function json2map(jsn) {
+    let map = new Map();
+    for (let i in jsn) {
+        if (jsn[i].cell_zid == null) continue;
+        map.set(jsn[i].cell_zid, jsn[i]);
+    }
+    return map;
+}
+
+readTextFile(tablJSON, function (text) {
+    window.jsonTabl = json2map(JSON.parse(text));
+});
+
+readTextFile(json, function (text) {
+    window.jsonMap = JSON.parse(text);
+    readTextFile(jsonGrid, function (text) {
+        window.jsonGrid = JSON.parse(text);
+        mapDraw()
+        admDraw()   
+    });    
+});
+
+
+
+
+
+
+
 
 function mapDraw() {
 
@@ -51,24 +95,11 @@ function mapDraw() {
     canvas.setAttribute("height", parseInt(window.getComputedStyle(canvas.parentElement).height));
     let sc = Math.min(canvas.width / 1920, canvas.height / 1080);
 
-    let json = "./src/fishnet2021.geojson";
-    let tablJSON = "./src/tabl.json";
 
-    function readTextFile(file, callback) {
-        var rawFile = new XMLHttpRequest();
-        rawFile.overrideMimeType("application/json");
-        rawFile.open("GET", file, true);
-        rawFile.onreadystatechange = function () {
-            if (rawFile.readyState === 4 && rawFile.status == "200") {
-                callback(rawFile.responseText);
-            }
-        }
-        rawFile.send(null);
-    }
 
     ctx.fillStyle = "wheat";
-    readTextFile(json, function (text) {
-        window.jsonMap = JSON.parse(text);
+    //readTextFile(json, function (text) {
+        //window.jsonMap = JSON.parse(text);
 
         for (let p = 0; p < window.jsonTabl.size; p++) {
             let d = window.jsonTabl.get(p.toString());
@@ -81,8 +112,6 @@ function mapDraw() {
             }
             scale = (maxVal - minVal) / (maxp - minp)
         }
-
-
 
         for (let i = 0; i < window.jsonMap.features.length; i++) {
             ctx.beginPath();
@@ -108,31 +137,7 @@ function mapDraw() {
             }
             ctx.fill();
         }
-
-    });
-
-    readTextFile(tablJSON, function (text) {
-        window.jsonTabl = json2map(JSON.parse(text));
-    });
-
-    function json2map(jsn) {
-        let map = new Map();
-        for (let i in jsn) {
-            if (jsn[i].cell_zid == null) continue;
-            map.set(jsn[i].cell_zid, jsn[i]);
-        }
-        return map;
-    }
-
-}
-
-randomColor = function () {
-    let letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
+    //});  
 }
 
 
@@ -141,6 +146,7 @@ function admDraw() {
     let canvas = document.createElement('canvas');
     document.getElementById("container").appendChild(canvas);
     canvas.style.position = 'absolute';
+    canvas.style.zIndex = 1;
 
     let ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, parseInt(window.getComputedStyle(canvas).width), parseInt(window.getComputedStyle(canvas).height));
@@ -149,27 +155,13 @@ function admDraw() {
     canvas.setAttribute("height", parseInt(window.getComputedStyle(canvas.parentElement).height));
     let sc = Math.min(canvas.width / 1920, canvas.height / 1080);
 
-    let json = "src/admzones2021.geojson";
-
-    function readTextFile(file, callback) {
-        var rawFile = new XMLHttpRequest();
-        rawFile.overrideMimeType("application/json");
-        rawFile.open("GET", file, true);
-        rawFile.onreadystatechange = function () {
-            if (rawFile.readyState === 4 && rawFile.status == "200") {
-                callback(rawFile.responseText);
-            }
-        }
-        rawFile.send(null);
-    }
-
-    readTextFile(json, function (text) {
-        window.jsonMap = JSON.parse(text);
+    /*readTextFile(json, function (text) {
+        window.jsonMap = JSON.parse(text);*/
 
         ctx.strokeStyle = "transparent";
-        for (let i = 0; i < window.jsonMap.features.length; i++) { //Все зоны
+        for (let i = 0; i < window.jsonGrid.features.length; i++) { //Все зоны
             ctx.beginPath();
-            let zonesCoord = window.jsonMap.features[i]["geometry"]["coordinates"][0];
+            let zonesCoord = window.jsonGrid.features[i]["geometry"]["coordinates"][0];
             //ctx.moveTo(((zonesCoord[0][0] - 30) * 300 - (canvas.width*0.8)) * sc, canvas.height - ((zonesCoord[0][1] - 50) * 300 - canvas.height ) * sc);
             //ctx.moveTo((zonesCoord[0][0] - 30), canvas.height - (zonesCoord[0][1] - 50));
             ctx.moveTo((zonesCoord[0][0] - 30) * (canvas.width / 6) - canvas.width * 0.75, canvas.height - (zonesCoord[0][1] - 50) * (canvas.height / 3) + (canvas.height + canvas.height * 0.35));
@@ -181,9 +173,6 @@ function admDraw() {
                 // console.log(canvas.height,"|||",zonesCoord[j][1],"|||",canvas.width - ((zonesCoord[j][0] - 30) * 300 - canvas.width) );
             }
             ctx.strokeStyle = "darkgoldenrod";
-            ctx.stroke();
-        }
-    });
-    
-
+            ctx.stroke();        
+    }; 
 }
